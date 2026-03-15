@@ -72,8 +72,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const email = emailInput ? emailInput.value : '';
             const mobile = mobileInput ? mobileInput.value : '';
 
-            if (!email || !mobile) {
-                alert('Please fill in email and mobile to proceed with payment.');
+            if (!name || !email || !mobile) {
+                alert('Please fill in all required fields.');
                 return;
             }
 

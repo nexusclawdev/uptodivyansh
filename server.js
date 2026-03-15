@@ -3,9 +3,11 @@ import cors from 'cors';
 import nodemailer from 'nodemailer';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { readFileSync } from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pdfPath = path.join(__dirname, 'AI-Money-Playbook-by-Uptodivyansh.pdf');
+const indexPath = path.join(__dirname, 'index.html');
 
 const app = express();
 app.use(cors());
@@ -83,7 +85,8 @@ app.get('/api/verify', async (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.send('Server is running. Use /api/webhook or /api/verify');
+  const html = readFileSync(indexPath, 'utf-8');
+  res.send(html);
 });
 
 const PORT = process.env.PORT || 3000;

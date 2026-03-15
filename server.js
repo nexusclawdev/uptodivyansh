@@ -12,6 +12,7 @@ const indexPath = path.join(__dirname, 'index.html');
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.static('.'));
 
 const GMAIL_USER = process.env.GMAIL_USER;
 const GMAIL_PASS = process.env.GMAIL_PASS;
@@ -85,8 +86,7 @@ app.get('/api/verify', async (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  const html = readFileSync(indexPath, 'utf-8');
-  res.send(html);
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;

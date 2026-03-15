@@ -1,7 +1,5 @@
 {
   "tasks": {
     "start": "deno run --allow-all server.js"
-  },
-  "imports": {},
-  "nodeModulesDir": "auto"
+  }
 }

@@ -9,6 +9,6 @@ services:
       - key: GMAIL_USER
         value: uptodivyansh@gmail.com
       - key: GMAIL_PASS
-        value: pooq vtji zszx wrpi
+        value: wyyx xwkj vfqu odev
       - key: UPIGATEWAY_KEY
         sync: false

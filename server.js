@@ -26,6 +26,35 @@ app.get('/api/test-email', (req, res) => {
   });
 });
 
+app.get('/api/send-test-email', async (req, res) => {
+  const testEmail = req.query.email;
+  if (!testEmail) {
+    return res.status(400).json({ error: 'Add ?email=your@email.com' });
+  }
+  
+  if (!GMAIL_USER || !GMAIL_PASS) {
+    return res.status(500).json({ error: 'Gmail not configured' });
+  }
+  
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: GMAIL_USER, pass: GMAIL_PASS }
+    });
+
+    await transporter.sendMail({
+      from: `"Uptodivyansh" <${GMAIL_USER}>`,
+      to: testEmail,
+      subject: 'Test - AI Wealth Blueprint',
+      html: '<p>Email is working! Payment webhook will send the PDF after successful payment.</p>'
+    });
+    
+    res.json({ success: true, message: 'Test email sent!' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/create-order', async (req, res) => {
   try {
     const { customer_name, customer_email, customer_mobile } = req.body;

@@ -1,10 +1,7 @@
 {
   "tasks": {
-    "start": "deno run --allow-all --no-check server.js"
+    "start": "deno run --allow-all server.js"
   },
   "imports": {},
-  "compilerOptions": {
-    "allowJs": true
-  },
-  "nodeModulesDir": true
+  "nodeModulesDir": "auto"
 }

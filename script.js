@@ -77,27 +77,18 @@ document.addEventListener('DOMContentLoaded', () => {
             payButton.disabled = true;
             payButton.innerText = 'Creating Secure Order...';
 
-            const payload = {
-                key: "fdde97dc-7bad-4f7e-b1a3-d93ee24a5d21",
-                client_txn_id: Date.now().toString(), // Unique transaction ID
-                amount: "97",
-                p_info: "Uptodivyansh AI Wealth Blueprint",
-                customer_name: name,
-                customer_email: email,
-                redirect_url: window.location.href.includes('index.html') 
-                              ? window.location.href.replace('index.html', 'success.html') 
-                              : window.location.href.split('?')[0] + 'success.html'
-            };
-
             try {
-                // NOTE: Calling a payment API directly from frontend may encounter CORS.
-                // In production, this call should ideally happen from a safe backend.
-                const response = await fetch('https://api.ekqr.in/api/create_order', {
+                // Call our backend to create order (avoids CORS issues)
+                const response = await fetch('/api/create-order', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({
+                        customer_name: name,
+                        customer_email: email,
+                        customer_mobile: mobile
+                    })
                 });
 
                 const result = await response.json();

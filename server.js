@@ -16,7 +16,36 @@ app.use(express.static('.'));
 
 const GMAIL_USER = process.env.GMAIL_USER;
 const GMAIL_PASS = process.env.GMAIL_PASS;
-const UPIGATEWAY_KEY = process.env.UPIGATEWAY_KEY;
+const UPIGATEWAY_KEY = process.env.UPIGATEWAY_KEY || 'fdde97dc-7bad-4f7e-b1a3-d93ee24a5d21';
+
+app.post('/api/create-order', async (req, res) => {
+  try {
+    const { customer_name, customer_email, customer_mobile } = req.body;
+    
+    const payload = {
+      key: UPIGATEWAY_KEY,
+      client_txn_id: Date.now().toString(),
+      amount: '97',
+      p_info: 'Uptodivyansh AI Wealth Blueprint',
+      customer_name,
+      customer_email,
+      customer_mobile: customer_mobile || '',
+      redirect_url: `${req.protocol}://${req.get('host')}/success.html`
+    };
+
+    const response = await fetch('https://api.ekqr.in/api/create_order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+    res.json(result);
+  } catch (error) {
+    console.error('Create Order Error:', error);
+    res.status(500).json({ status: false, msg: 'Failed to create order' });
+  }
+});
 
 app.get('/api/webhook', (req, res) => {
   res.json({ status: 'active', message: 'Webhook endpoint is live.', version: '3.0.0' });

@@ -18,6 +18,14 @@ const GMAIL_USER = process.env.GMAIL_USER;
 const GMAIL_PASS = process.env.GMAIL_PASS;
 const UPIGATEWAY_KEY = process.env.UPIGATEWAY_KEY || 'fdde97dc-7bad-4f7e-b1a3-d93ee24a5d21';
 
+app.get('/api/test-email', (req, res) => {
+  res.json({ 
+    gmailConfigured: !!(GMAIL_USER && GMAIL_PASS),
+    gmailUser: GMAIL_USER ? GMAIL_USER.substring(0, 5) + '...' : 'NOT SET',
+    gmailPassSet: !!GMAIL_PASS
+  });
+});
+
 app.post('/api/create-order', async (req, res) => {
   try {
     const { customer_name, customer_email, customer_mobile } = req.body;

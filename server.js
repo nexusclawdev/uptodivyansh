@@ -16,7 +16,7 @@ app.use(express.static('.'));
 
 const GMAIL_USER = process.env.GMAIL_USER;
 const GMAIL_PASS = process.env.GMAIL_PASS;
-const UPIGATEWAY_KEY = process.env.UPIGATEWAY_KEY || 'fdde97dc-7bad-4f7e-b1a3-d93ee24a5d21';
+const UPIGATEWAY_KEY = process.env.UPIGATEWAY_KEY;
 
 app.get('/api/test-email', (req, res) => {
   res.json({ 
@@ -156,4 +156,21 @@ app.get('/', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+
+  // Self-ping every 7 minutes to prevent Render free tier cold starts
+  const SELF_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+  setInterval(async () => {
+    try {
+      await fetch(`${SELF_URL}/api/ping`);
+      console.log(`[keep-alive] ping sent to ${SELF_URL}/api/ping`);
+    } catch (e) {
+      console.warn('[keep-alive] ping failed:', e.message);
+    }
+  }, 7 * 60 * 1000); // every 7 minutes
+});
+
+app.get('/api/ping', (req, res) => {
+  res.json({ ok: true, ts: Date.now() });
+});

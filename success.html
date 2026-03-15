@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Success | Uptodivyansh AI Wealth Blueprint</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .success-hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+        }
+        .success-card {
+            background: var(--bg-main);
+            padding: 3rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+            max-width: 500px;
+            width: 100%;
+            border: 1px solid var(--border);
+        }
+        .check-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 1.5rem;
+        }
+        #download-btn {
+            margin-top: 2rem;
+            display: none;
+        }
+        .verifying-text {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--accent-soft);
+            border-top: 2px solid var(--accent);
+            border-radius: 50%;
+            display: inline-block;
+            animation: spin 1s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-soft">
+    <main class="success-hero">
+        <div class="success-card reveal">
+            <div class="check-icon">✓</div>
+            <h1 style="margin-bottom: 0.5rem;">Payment Verified</h1>
+            <p class="text-muted">Thank you for your purchase. Your blueprint is ready.</p>
+            
+            <div id="verifying-section">
+                <div class="loader"></div>
+                <span class="verifying-text">Finalizing secure download link...</span>
+            </div>
+
+            <a href="AI-Money-Playbook-by-Uptodivyansh.pdf" download id="download-btn" class="btn btn-primary" style="width: 100%;">
+                <span class="btn-text">Download Playbook (PDF)</span>
+            </a>
+
+            <p style="margin-top: 2rem; font-size: 0.8rem; color: var(--text-muted);">
+                A backup copy has also been sent to your email.
+            </p>
+        </div>
+    </main>
+
+    <script>
+        window.addEventListener('load', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const txnId = params.get('client_txn_id') || params.get('txn_id');
+            const verifyingSection = document.getElementById('verifying-section');
+            const downloadBtn = document.getElementById('download-btn');
+            const statusText = document.querySelector('.verifying-text');
+
+            if (!txnId) {
+                statusText.innerText = 'No transaction ID found. Contact support if you have paid.';
+                statusText.style.color = 'red';
+                document.querySelector('.loader').style.display = 'none';
+                return;
+            }
+
+            try {
+                // Call our secure backend verification function
+                const response = await fetch(`/api/verify?client_txn_id=${txnId}`);
+                const data = await response.json();
+
+                if (data.status && data.download_ready) {
+                    // Success: Reveal the download button
+                    verifyingSection.style.display = 'none';
+                    downloadBtn.style.display = 'inline-block';
+                    
+                    // Auto-trigger download
+                    // downloadBtn.click();
+                } else {
+                    // Failed or Pending
+                    statusText.innerText = data.message || 'Verification failed. Status: ' + (data.original_status || 'unknown');
+                    statusText.style.color = '#ef4444';
+                    document.querySelector('.loader').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Verification Error:', error);
+                statusText.innerText = 'Connection error. Please refresh to try again.';
+                statusText.style.color = '#ef4444';
+                document.querySelector('.loader').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

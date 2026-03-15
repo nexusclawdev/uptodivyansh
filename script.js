@@ -55,9 +55,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             e.preventDefault();
-            document.querySelector(this.getAttribute('href')).scrollIntoView({
-                behavior: 'smooth'
-            });
+            const targetId = this.getAttribute('href');
+            // For #checkout links, scroll to the price/form box directly
+            const scrollTarget = (targetId === '#checkout')
+                ? document.querySelector('.checkout-action') || document.querySelector(targetId)
+                : document.querySelector(targetId);
+            if (!scrollTarget) return;
+            const navHeight = document.getElementById('nav') ? document.getElementById('nav').offsetHeight : 0;
+            const top = scrollTarget.getBoundingClientRect().top + window.pageYOffset - navHeight - 16;
+            window.scrollTo({ top, behavior: 'smooth' });
         });
     });
     // 5. UPIGateway Merchant Connect Integration

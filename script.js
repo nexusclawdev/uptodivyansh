@@ -66,12 +66,13 @@ document.addEventListener('DOMContentLoaded', () => {
         payButton.addEventListener('click', async () => {
             const nameInput = document.getElementById('cust_name');
             const emailInput = document.getElementById('cust_email');
+            const mobileInput = document.getElementById('cust_mobile');
             
             const name = nameInput ? nameInput.value : '';
             const email = emailInput ? emailInput.value : '';
-            const mobile = '';
+            const mobile = mobileInput ? mobileInput.value : '';
 
-            if (!name || !email) {
+            if (!name || !email || !mobile) {
                 alert('Please fill in your details to proceed with the secure payment.');
                 return;
             }

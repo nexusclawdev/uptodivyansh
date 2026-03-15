@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: uptodivyansh-webhook
+    env: node
+    region: oregon
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: GMAIL_USER
+        value: uptodivyansh@gmail.com
+      - key: GMAIL_PASS
+        value: pooq vtji zszx wrpi
+      - key: UPIGATEWAY_KEY
+        sync: false

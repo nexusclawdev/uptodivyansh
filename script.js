@@ -107,7 +107,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Success: Redirect user to the payment gateway
                     window.location.href = result.data.payment_url;
                 } else {
-                    alert('Order Creation Failed: ' + (result.msg || 'Unknown Error'));
+                    // Detailed error message if available
+                    const errorMsg = result.msg || 'Unknown Error';
+                    console.error('Order Creation Failed:', errorMsg);
+                    alert('Order Creation Failed: ' + errorMsg);
                     payButton.disabled = false;
                     payButton.innerText = 'Download Instantly';
                 }

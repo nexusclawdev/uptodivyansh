@@ -22,7 +22,9 @@ app.get('/api/test-email', (req, res) => {
   res.json({ 
     gmailConfigured: !!(GMAIL_USER && GMAIL_PASS),
     gmailUser: GMAIL_USER ? GMAIL_USER.substring(0, 5) + '...' : 'NOT SET',
-    gmailPassSet: !!GMAIL_PASS
+    gmailPassSet: !!GMAIL_PASS,
+    upiGatewayKeySet: !!UPIGATEWAY_KEY,
+    upiGatewayKeyPreview: UPIGATEWAY_KEY ? UPIGATEWAY_KEY.substring(0, 5) + '...' : 'NOT SET'
   });
 });
 
@@ -59,6 +61,14 @@ app.post('/api/create-order', async (req, res) => {
   try {
     const { customer_name, customer_email, customer_mobile } = req.body;
     
+    if (!UPIGATEWAY_KEY) {
+      console.error('CRITICAL: UPIGATEWAY_KEY is not set in environment variables.');
+      return res.status(500).json({ 
+        status: false, 
+        msg: 'Server Configuration Error: Payment API Key is missing. Please set UPIGATEWAY_KEY on Render.' 
+      });
+    }
+
     const payload = {
       key: UPIGATEWAY_KEY,
       client_txn_id: Date.now().toString(),
@@ -131,6 +141,10 @@ app.get('/api/verify', async (req, res) => {
   const { client_txn_id } = req.query;
   if (!client_txn_id) {
     return res.status(400).json({ status: false, message: 'Transaction ID required' });
+  }
+
+  if (!UPIGATEWAY_KEY) {
+    return res.status(500).json({ status: false, message: 'Server Configuration Error: Payment API Key is missing.' });
   }
 
   try {

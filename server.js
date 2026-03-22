@@ -4,6 +4,7 @@ import nodemailer from 'nodemailer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { readFileSync } from 'fs';
+import crypto from 'crypto';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pdfPath = path.join(__dirname, 'AI-Money-Playbook-by-Uptodivyansh.pdf');
@@ -57,42 +58,7 @@ app.get('/api/send-test-email', async (req, res) => {
   }
 });
 
-app.post('/api/create-order', async (req, res) => {
-  try {
-    const { customer_name, customer_email, customer_mobile } = req.body;
-    
-    if (!UPIGATEWAY_KEY) {
-      console.error('CRITICAL: UPIGATEWAY_KEY is not set in environment variables.');
-      return res.status(500).json({ 
-        status: false, 
-        msg: 'Server Configuration Error: Payment API Key is missing. Please set UPIGATEWAY_KEY on Render.' 
-      });
-    }
 
-    const payload = {
-      key: UPIGATEWAY_KEY,
-      client_txn_id: Date.now().toString(),
-      amount: '97',
-      p_info: 'Uptodivyansh AI Wealth Blueprint',
-      customer_name,
-      customer_email,
-      customer_mobile: customer_mobile || '',
-      redirect_url: `${req.protocol}://${req.get('host')}/success.html`
-    };
-
-    const response = await fetch('https://api.ekqr.in/api/create_order', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    const result = await response.json();
-    res.json(result);
-  } catch (error) {
-    console.error('Create Order Error:', error);
-    res.status(500).json({ status: false, msg: 'Failed to create order' });
-  }
-});
 
 app.get('/api/webhook', (req, res) => {
   res.json({ status: 'active', message: 'Webhook endpoint is live.', version: '3.0.0' });
@@ -100,10 +66,33 @@ app.get('/api/webhook', (req, res) => {
 
 app.post('/api/webhook', async (req, res) => {
   try {
-    const { status, customer_email, customer_name, client_txn_id } = req.body;
-    console.log(`Webhook: Txn ${client_txn_id} | Status: ${status}`);
+    const environment = req.headers['x-uropay-environment'];
+    const signature = req.headers['x-uropay-signature'];
+    
+    // Verify Signature if SECRET is provided
+    if (process.env.UROPAY_SECRET && signature) {
+      const sortedData = Object.fromEntries(
+        Object.entries(req.body).sort(([a], [b]) => a.localeCompare(b))
+      );
+      const payload = {...sortedData, environment: environment};
+      
+      const sha512 = crypto.createHash('sha512').update(process.env.UROPAY_SECRET).digest('hex');
+      const expectedSignature = crypto.createHmac('sha256', sha512).update(JSON.stringify(payload)).digest('hex');
+      
+      if (expectedSignature !== signature) {
+        console.error('Webhook signature mismatch');
+        return res.status(401).json({ error: 'Invalid signature' });
+      }
+    }
 
-    if (status === 'success' && customer_email) {
+    const { amount, referenceNumber, customerEmail, customer_email, email, customerName, customer_name, name, from, vpa } = req.body;
+    
+    const targetEmail = customerEmail || customer_email || email;
+    const targetName = customerName || customer_name || name || from || 'there';
+
+    console.log(`Webhook Received: Ref ${referenceNumber} | Amount ${amount} | From: ${targetName} | Email: ${targetEmail}`);
+
+    if (targetEmail) {
       const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: { user: GMAIL_USER, pass: GMAIL_PASS }
@@ -111,11 +100,11 @@ app.post('/api/webhook', async (req, res) => {
 
       await transporter.sendMail({
         from: `"Uptodivyansh" <${GMAIL_USER}>`,
-        to: customer_email,
+        to: targetEmail,
         subject: 'Your AI Wealth Blueprint is Here!',
         html: `
           <div style="font-family: sans-serif; line-height: 1.6; color: #333;">
-            <h2>Congratulations, ${customer_name || 'there'}!</h2>
+            <h2>Congratulations, ${targetName}!</h2>
             <p>Thank you for your purchase. Your AI Money Playbook is attached.</p>
             <p>Team Uptodivyansh</p>
           </div>
@@ -126,44 +115,18 @@ app.post('/api/webhook', async (req, res) => {
         }]
       });
 
-      console.log(`Email sent to ${customer_email}`);
+      console.log(`Email sent to ${targetEmail}`);
       return res.json({ status: 'delivered' });
     }
 
-    res.json({ status: 'ignored' });
+    res.json({ status: 'ignored - no email available to send product' });
   } catch (error) {
     console.error('Webhook Error:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
-app.get('/api/verify', async (req, res) => {
-  const { client_txn_id } = req.query;
-  if (!client_txn_id) {
-    return res.status(400).json({ status: false, message: 'Transaction ID required' });
-  }
 
-  if (!UPIGATEWAY_KEY) {
-    return res.status(500).json({ status: false, message: 'Server Configuration Error: Payment API Key is missing.' });
-  }
-
-  try {
-    const response = await fetch('https://api.ekqr.in/api/check_order_status', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key: UPIGATEWAY_KEY, client_txn_id })
-    });
-
-    const result = await response.json();
-    if (result.status && result.data?.status === 'success') {
-      return res.json({ status: true, message: 'Payment Verified', download_ready: true });
-    }
-    return res.json({ status: false, message: 'Payment not completed' });
-  } catch (error) {
-    console.error('Verify Error:', error);
-    res.status(500).json({ status: false, message: 'Internal Server Error' });
-  }
-});
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));

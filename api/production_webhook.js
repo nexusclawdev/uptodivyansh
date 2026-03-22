@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import crypto from 'crypto';
 
 export default async function handler(req, res) {
     // Handle all HTTP methods
@@ -20,12 +21,32 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { status, customer_email, customer_name, client_txn_id } = req.body;
+        const environment = req.headers['x-uropay-environment'];
+        const signature = req.headers['x-uropay-signature'];
+        
+        if (process.env.UROPAY_SECRET && signature) {
+            const sortedData = Object.fromEntries(
+                Object.entries(req.body || {}).sort(([a], [b]) => a.localeCompare(b))
+            );
+            const payload = {...sortedData, environment: environment};
+            
+            const sha512 = crypto.createHash('sha512').update(process.env.UROPAY_SECRET).digest('hex');
+            const expectedSignature = crypto.createHmac('sha256', sha512).update(JSON.stringify(payload)).digest('hex');
+            
+            if (expectedSignature !== signature) {
+                console.error('Webhook signature mismatch');
+                return res.status(401).json({ error: 'Invalid signature' });
+            }
+        }
 
-        console.log(`Received Webhook for Txn: ${client_txn_id} | Status: ${status}`);
+        const { amount, referenceNumber, customerEmail, customer_email, email, customerName, customer_name, name, from, vpa } = req.body || {};
+        
+        const targetEmail = customerEmail || customer_email || email;
+        const targetName = customerName || customer_name || name || from || 'there';
 
-        // Only proceed if the payment was successful
-        if (status === 'success' && customer_email) {
+        console.log(`Webhook Received: Ref ${referenceNumber} | Amount ${amount} | From: ${targetName} | Email: ${targetEmail}`);
+
+        if (targetEmail) {
             
             // 1. Configure Email Transporter (Gmail)
             const transporter = nodemailer.createTransport({
@@ -39,11 +60,11 @@ export default async function handler(req, res) {
             // 2. Define the Email Content
             const mailOptions = {
                 from: `"Uptodivyansh" <${process.env.GMAIL_USER}>`,
-                to: customer_email,
+                to: targetEmail,
                 subject: 'Your AI Wealth Blueprint is Here! 🚀',
                 html: `
                     <div style="font-family: sans-serif; line-height: 1.6; color: #333;">
-                        <h2>Congratulations, ${customer_name}!</h2>
+                        <h2>Congratulations, ${targetName}!</h2>
                         <p>Thank you for your purchase. You are now one technical document away from permanently altering your revenue trajectory.</p>
                         <p><strong>Find your 10-page AI Money Playbook attached to this email.</strong></p>
                         <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
@@ -61,12 +82,12 @@ export default async function handler(req, res) {
 
             // 3. Send the Email
             await transporter.sendMail(mailOptions);
-            console.log(`Success: Ebook sent to ${customer_email}`);
+            console.log(`Success: Ebook sent to ${targetEmail}`);
             
             return res.status(200).json({ status: 'delivered' });
         }
 
-        return res.status(200).json({ status: 'ignored', message: 'Not a success status' });
+        return res.status(200).json({ status: 'ignored - no email available to send product' });
 
     } catch (error) {
         console.error('Webhook Error:', error);

@@ -118,6 +118,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (isMobile && result.data.upiString) {
                         intentBtn.style.display = 'flex';
                         intentBtn.href = result.data.upiString;
+                        intentBtn.innerText = 'Pay via UPI App';
+                        
+                        // Automatically try to open the UPI app directly
+                        setTimeout(() => {
+                            window.location.href = result.data.upiString;
+                        }, 400);
                     }
 
                     statusText.style.display = 'block';

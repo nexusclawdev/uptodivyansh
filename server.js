@@ -125,6 +125,12 @@ app.get('/api/verify-uropay', async (req, res) => {
     });
 
     const result = await ur.json();
+    
+    // SECURITY: Only provide the product link if UroPay explicitly confirms the payment is COMPLETED
+    if (result.data && result.data.orderStatus === 'COMPLETED') {
+      result.data.secretLink = 'https://drive.google.com/file/d/1SrdCuwrLbLwERg_iFMvacRXgsuZwVHA3/view?pli=1';
+    }
+    
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: 'Verification failed' });

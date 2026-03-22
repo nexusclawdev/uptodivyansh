@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 clearInterval(checkInterval);
                                 statusText.innerText = 'Payment Successful! Redirecting...';
                                 statusText.style.color = '#10b981'; // green
-                                setTimeout(() => window.location.href = '/success.html', 1500);
+                                setTimeout(() => window.location.href = 'https://drive.google.com/file/d/1SrdCuwrLbLwERg_iFMvacRXgsuZwVHA3/view?pli=1', 1500);
                             } else if (vData.data && (vData.data.orderStatus === 'FAILED' || vData.data.orderStatus === 'CANCELLED')) {
                                 clearInterval(checkInterval);
                                 statusText.innerText = 'Payment Failed or Cancelled.';

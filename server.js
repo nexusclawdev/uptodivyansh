@@ -60,6 +60,77 @@ app.get('/api/send-test-email', async (req, res) => {
 
 
 
+app.post('/api/create-uropay-order', async (req, res) => {
+  try {
+    const { customer_name, customer_email, customer_mobile } = req.body;
+    
+    // We expect UROPAY_API_KEY from env, or we hardcode it since they gave it
+    const apiKey = process.env.UROPAY_API_KEY || "65A6MT4JCUDBQT6X";
+    const secret = process.env.UROPAY_SECRET;
+    
+    if (!secret) {
+      return res.status(500).json({ status: false, msg: 'UROPAY_SECRET is not configured on server' });
+    }
+
+    const sha512 = crypto.createHash('sha512').update(secret).digest('hex');
+    const authHeader = `Bearer ${sha512}`;
+
+    const orderPayload = {
+      vpa: "encryptshahi@fam",
+      vpaName: "Divyansh",
+      amount: 9700,
+      merchantOrderId: "ORDER" + Date.now().toString(),
+      customerName: customer_name,
+      customerEmail: customer_email,
+      notes: { mobile: customer_mobile || '' }
+    };
+
+    const ur = await fetch('https://api.uropay.me/order/generate', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-API-KEY': apiKey,
+        'Authorization': authHeader
+      },
+      body: JSON.stringify(orderPayload)
+    });
+
+    const result = await ur.json();
+    if (result.code === 200 && result.data) {
+      res.json({
+        status: true,
+        data: result.data // contains upiString, qrCode, uroPayOrderId
+      });
+    } else {
+      res.status(400).json({ status: false, msg: result.message || 'Payment generation failed' });
+    }
+  } catch (error) {
+    console.error('Create Order Error:', error);
+    res.status(500).json({ status: false, msg: 'Internal server error' });
+  }
+});
+
+app.get('/api/verify-uropay', async (req, res) => {
+  try {
+    const { orderId } = req.query;
+    const apiKey = process.env.UROPAY_API_KEY || "65A6MT4JCUDBQT6X";
+
+    const ur = await fetch(`https://api.uropay.me/order/status/${orderId}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'X-API-KEY': apiKey
+      }
+    });
+
+    const result = await ur.json();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: 'Verification failed' });
+  }
+});
+
 app.get('/api/webhook', (req, res) => {
   res.json({ status: 'active', message: 'Webhook endpoint is live.', version: '3.0.0' });
 });

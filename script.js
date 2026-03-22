@@ -66,5 +66,102 @@ document.addEventListener('DOMContentLoaded', () => {
             window.scrollTo({ top, behavior: 'smooth' });
         });
     });
-    // UPIGateway legacy logic replaced by UroPay script embed.
+    const payButton = document.getElementById('pay-button');
+    const modal = document.getElementById('uropay-modal');
+    const modalClose = document.getElementById('modal-close');
+    const qrImg = document.getElementById('uropay-qr');
+    const intentBtn = document.getElementById('uropay-intent-btn');
+    const statusText = document.getElementById('uropay-status-text');
+
+    let checkInterval = null;
+
+    if (payButton) {
+        payButton.addEventListener('click', async () => {
+            const nameInput = document.getElementById('cust_name');
+            const emailInput = document.getElementById('cust_email');
+            const mobileInput = document.getElementById('cust_mobile');
+            
+            const name = nameInput ? nameInput.value : '';
+            const email = emailInput ? emailInput.value : '';
+            const mobile = mobileInput ? mobileInput.value : '';
+
+            if (!name || !email || !mobile) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+
+            payButton.disabled = true;
+            payButton.innerText = 'Initializing Secure Checkout...';
+
+            try {
+                const response = await fetch('/api/create-uropay-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        customer_name: name,
+                        customer_email: email,
+                        customer_mobile: mobile
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.status && result.data) {
+                    // Show custom modal
+                    modal.classList.remove('hidden');
+                    modal.classList.add('active');
+                    
+                    qrImg.src = result.data.qrCode;
+                    
+                    // Show intent button on mobile devices roughly
+                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                    if (isMobile && result.data.upiString) {
+                        intentBtn.style.display = 'flex';
+                        intentBtn.href = result.data.upiString;
+                    }
+
+                    statusText.style.display = 'block';
+
+                    // Start polling
+                    const orderId = result.data.uroPayOrderId;
+                    checkInterval = setInterval(async () => {
+                        try {
+                            const vRes = await fetch(`/api/verify-uropay?orderId=${orderId}`);
+                            const vData = await vRes.json();
+                            if (vData.data && vData.data.orderStatus === 'COMPLETED') {
+                                clearInterval(checkInterval);
+                                statusText.innerText = 'Payment Successful! Redirecting...';
+                                statusText.style.color = '#10b981'; // green
+                                setTimeout(() => window.location.href = '/success.html', 1500);
+                            } else if (vData.data && (vData.data.orderStatus === 'FAILED' || vData.data.orderStatus === 'CANCELLED')) {
+                                clearInterval(checkInterval);
+                                statusText.innerText = 'Payment Failed or Cancelled.';
+                                statusText.style.color = '#ef4444'; // red
+                            }
+                        } catch(e) {}
+                    }, 3000);
+
+                } else {
+                    alert('Order Creation Failed: ' + (result.msg || 'Unknown Error'));
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Connection Error. Please check your internet.');
+            } finally {
+                payButton.disabled = false;
+                payButton.innerText = 'Get Access Now';
+            }
+        });
+    }
+
+    if (modalClose) {
+        modalClose.addEventListener('click', () => {
+            modal.classList.remove('active');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+            if (checkInterval) {
+                clearInterval(checkInterval);
+                checkInterval = null;
+            }
+        });
+    }
 });

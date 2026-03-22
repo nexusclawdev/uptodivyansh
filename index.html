@@ -188,10 +188,21 @@
                     </div>
                 </div>
                 <!-- High Contrast Von Restorff Button -->
-                <div class="checkout-form" style="margin-bottom: 2rem; max-width: 100%; width: 100%; box-sizing: border-box; text-align: center;">
-                    <a href="#" class="uropay-btn btn btn-massive btn-checkout pulse-btn" data-uropay-api-key="65A6MT4JCUDBQT6X" data-uropay-button-id="ECHO746343" data-uropay-environment="LIVE" data-uropay-amount="97" style="text-decoration: none; display: inline-block;">Buy Now for &#8377;97</a>
-                    <script src="https://cdn.uropay.me/uropay-embed.min.js"></script>
+                <div class="checkout-form" style="margin-bottom: 2rem; max-width: 100%; width: 100%; box-sizing: border-box;">
+                    <div class="form-group" style="margin-bottom: 1rem; width: 100%;">
+                        <input type="text" id="cust_name" placeholder="Your Name" required style="width: 100%; padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: var(--font-sans); box-sizing: border-box;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 1rem; width: 100%;">
+                        <input type="email" id="cust_email" placeholder="Email Address" required style="width: 100%; padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: var(--font-sans); box-sizing: border-box;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 1rem; width: 100%;">
+                        <input type="tel" id="cust_mobile" placeholder="Mobile Number" required style="width: 100%; padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: var(--font-sans); box-sizing: border-box;">
+                    </div>
                 </div>
+
+                <button id="pay-button" class="btn btn-massive btn-checkout pulse-btn">
+                    Get Access Now
+                </button>
                 <p class="micro-text" style="text-align: center; margin-top: 0.5rem;">Sent immediately to your email.</p>
                 <div class="security-badge">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
@@ -200,6 +211,28 @@
             </div>
         </div>
     </section>
+
+    <!-- Custom UroPay Payment Modal -->
+    <div id="uropay-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <span class="modal-close" id="modal-close">&times;</span>
+            <div class="modal-header">
+                <h2>Complete Payment</h2>
+                <p>Scan the QR on another phone, or click the button below to open your UPI app automatically.</p>
+            </div>
+            
+            <div class="modal-qr-container">
+                <img id="uropay-qr" src="" alt="UPI QR Code loading...">
+            </div>
+
+            <div class="modal-actions">
+                <a href="#" id="uropay-intent-btn" class="btn btn-primary" style="display: none; width: 100%; margin-bottom: 1rem; justify-content: center;">
+                    Pay via UPI App (GPay, PhonePe)
+                </a>
+                <p class="micro-text" id="uropay-status-text" style="display: none;">Verifying payment... Please wait.</p>
+            </div>
+        </div>
+    </div>
 
     <footer class="footer-clean">
         <div class="footer-content">
